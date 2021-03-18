@@ -15,6 +15,8 @@ export class Game {
     mines: number;
     board: Array<Array<string>> = [];
     status: string = 'IN PROGRESS';
+    code: string = '';
+    finished: boolean = false;
 
     constructor(posX: number, posY: number, mines: number) {
         this.sizeX = posX;
@@ -24,16 +26,15 @@ export class Game {
         this.generateBoard()
     }
 
-    static restoreOldGame(oldGameData: any) {
+    static restoreOldGame(oldGameData: any): Game {
         const oldGame: Game = new Game(oldGameData.sizeX, oldGameData.sizeY, 0)
         oldGame.boardMines = oldGameData.boardMines;
         oldGame.boardChecked = oldGameData.boardChecked;
         oldGame.boardFlags = oldGameData.boardFlags;
-        oldGame.sizeX = oldGameData.sizeX;
-        oldGame.sizeY = oldGameData.sizeY;
         oldGame.mines = oldGameData.mines;
         oldGame.board = oldGameData.board;
         oldGame.status = oldGameData.status;
+        oldGame.code = oldGameData._id;
         return oldGame;
     }
 
@@ -43,7 +44,7 @@ export class Game {
             return false
         };
         if (this.findFlag(cell)) {
-            this.boardFlags = this.boardFlags.filter((elem) => elem.x === cell.x && elem.y === cell.y);
+            this.boardFlags = this.boardFlags.filter((elem) => !(elem.x === cell.x && elem.y === cell.y));
             this.boardChecked = this.boardChecked.filter((elem) => elem.x === cell.x && elem.y === cell.y);
             this.board[cell.x][cell.y] = '#';
         } else {
@@ -57,7 +58,8 @@ export class Game {
         if (!this.isCellValid(cell)) {
             console.log('Coordenada invalida.')
             return false
-        };
+        }
+        ;
         if (this.boardChecked.length === 0) {
             if (this.findMine(cell)) {
                 this.moveMine(cell);
@@ -70,15 +72,16 @@ export class Game {
             } else {
                 if (this.findMine(cell)) {
                     console.log('Bomba! buen intento.')
-                    this.status = 'WIN!!!'
-                    return true;
+                    this.showMap();
+                    this.status = 'BOOM!!!'
+                    this.finished = true;
                 } else {
                     this.markCell(cell);
                     console.log('Bien ahi, safaste.')
                 }
             }
         }
-        return this.checkWin();
+        this.checkWin();
     }
 
     moveMine(cell: Cell) {
@@ -122,13 +125,29 @@ export class Game {
         }
     }
 
-    getData() {
+    getDataFront() {
         return {
             sizeX: this.sizeX,
             sizeY: this.sizeY,
             mines: this.mines,
             board: this.board,
-            status: this.status
+            status: this.status,
+            code: this.code,
+            finished: this.finished
+        }
+    }
+
+    getDataDb() {
+        return {
+            boardMines: this.boardMines,
+            boardChecked: this.boardChecked,
+            boardFlags: this.boardFlags,
+            sizeX: this.sizeX,
+            sizeY: this.sizeY,
+            mines: this.mines,
+            board: this.board,
+            status: this.status,
+            finished: this.finished
         }
     }
 
@@ -146,11 +165,12 @@ export class Game {
     }
 
     private checkWin() {
-        const status = this.boardChecked.length + this.boardMines.length === this.sizeX * this.sizeY;
-        if(status){
-            this.status = 'WIN!!!'
+        const status = this.boardChecked.length - this.boardFlags.length + this.boardMines.length === this.sizeX * this.sizeY;
+        if (status) {
+            this.showMap();
+            this.status = 'WIN!!!';
+            this.finished = true;
         }
-        return status
     }
 
     private isCellValid(cell: Cell) {
@@ -176,9 +196,9 @@ export class Game {
     }
 
     private showMap() {
-        for(let x = 0; x < this.sizeX; x++){
-            for(let y = 0; y < this.sizeY; y++){
-                const cell = {x:x, y:y};
+        for (let x = 0; x < this.sizeX; x++) {
+            for (let y = 0; y < this.sizeY; y++) {
+                const cell = {x: x, y: y};
                 if (this.findMine(cell)) {
                     this.board[x][y] = '!';
                 } else if (this.findFlag(cell)) {
