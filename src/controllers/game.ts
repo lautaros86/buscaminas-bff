@@ -2,12 +2,38 @@ import {Request, Response} from 'express'
 import {GameModel} from './../schemas/game'
 import {Game} from "../models/game";
 
-export const newGame = (req: Request, res: Response) => {
-    const {x, y, mines} = req.body;
+export const newGame = async (req: Request, res: Response) => {
+    const x: number = +(req.query.x || 0)
+    const y: number = +(req.query.y || 0)
+    const mines: number = +(req.query.mines || 0)
     const game = new Game(x, y, mines)
+    const gameModel: any = saveGame(game);
+    game.code = gameModel._id.toString();
     res.json({
         msg: 'newGames',
-        game: game.getData()
+        game: game.getDataFront()
+    })
+}
+
+export const toogleFlag = async (req: Request, res: Response) => {
+    const x: number = +(req.query.x || 0)
+    const y: number = +(req.query.y || 0)
+    const code: any = req.query.code
+    const game = await updateGame(x, y, code, true);
+    res.json({
+        msg: 'flag toogle',
+        game: game.getDataFront(),
+    })
+}
+
+export const clickCell = async (req: Request, res: Response) => {
+    const x: number = +(req.query.x || 0)
+    const y: number = +(req.query.y || 0)
+    const code: any = req.query.code
+    const game = await updateGame(x, y, code, false);
+    res.json({
+        msg: 'cell clicked',
+        game: game.getDataFront()
     })
 }
 
@@ -24,67 +50,34 @@ export const getGames = (req: Request, res: Response) => {
 export const getGame = async (req: Request, res: Response) => {
     const {id} = req.params;
     try {
-        const game = await GameModel.findById(id);
+        const gameData = await GameModel.findById(id);
+        const game = Game.restoreOldGame(gameData);
         res.json({
             msg: 'getGame',
-            game: game
+            game: game.getDataFront()
         })
     } catch (err: any) {
         console.log('Fallo ' + err)
+        throw new Error(err)
     }
 }
 
-export const postGame = (req: Request, res: Response) => {
-    const {body} = req;
-    const {id} = req.params;
-    // Create an instance of model SomeModel
+const saveGame = (game: Game): any => {
     GameModel.init();
-    const game = new GameModel({
-        boardMines: [
-            { x: 3, y: 1 },
-            { x: 1, y: 4 },
-            { x: 5, y: 5 },
-            { x: 3, y: 2 },
-            { x: 2, y: 3 },
-            { x: 4, y: 4 },
-            { x: 3, y: 3 },
-            { x: 4, y: 3 },
-            { x: 2, y: 4 },
-            { x: 1, y: 2 }
-        ],
-        boardChecked: [],
-        boardFlags: [],
-        sizeX: 5,
-        sizeY: 5,
-        mines: 10
-    });
-
-    // Save the new model instance, passing a callback
-    game.save(function (err: any) {
+    const gameModel = new GameModel(game.getDataDb());
+    gameModel.save(function (err: any, game: any) {
         if (err) throw Error(err);
-        console.log('save game')
     });
-    res.json({
-        msg: 'postGames',
-        body
-    })
+    return gameModel;
 }
 
-export const putGame = (req: Request, res: Response) => {
-    const {body} = req;
-    const {id} = req.params;
 
-    res.json({
-        msg: 'putGames',
-        body
+const updateGame = async (x: number, y: number, code: string, flag: boolean = false): Promise<Game> => {
+    const gameData = await GameModel.findById(code);
+    const game = Game.restoreOldGame(gameData)
+    flag ? game.toogleFlag({x, y}) : game.checkCell({x, y})
+    GameModel.updateOne({ _id: code }, game.getDataDb(), { multi: false }, function(err: any) {
+        if(err) { throw err; }
     })
-}
-
-export const deleteGame = (req: Request, res: Response) => {
-    const {id} = req.params;
-
-    res.json({
-        msg: 'deleteGames',
-        id
-    })
+    return game;
 }
