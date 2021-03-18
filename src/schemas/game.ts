@@ -1,3 +1,5 @@
+import {Cell} from "../models/game";
+
 const mongoose = require('mongoose');
 
 //Define a schema
@@ -8,7 +10,10 @@ const GameSchecma = new Schema({
     boardFlags: [],
     sizeX: Number,
     sizeY: Number,
-    mines: Number
+    mines: Number,
+    board: [],
+    status: String,
+    finished: Boolean
 });
 
 // Compile model from schema
