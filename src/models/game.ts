@@ -130,6 +130,7 @@ export class Game {
             sizeX: this.sizeX,
             sizeY: this.sizeY,
             mines: this.mines,
+            flags: this.boardFlags.length,
             board: this.board,
             status: this.status,
             code: this.code,
