@@ -38,7 +38,7 @@ export const clickCell = async (req: Request, res: Response) => {
 }
 
 export const getGame = async (req: Request, res: Response) => {
-    const {id} = req.body;
+    const {id} = req.params;
     try {
         const gameData = await GameModel.findById(id);
         const game = Game.restoreOldGame(gameData);
