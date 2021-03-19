@@ -1,5 +1,5 @@
 import {expect} from 'chai';
-import {Game} from '../src/models/game';
+import {Game} from '../models/game';
 
 describe('Game tests', () => {
 

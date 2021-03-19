@@ -3,9 +3,9 @@ import {GameModel} from './../schemas/game'
 import {Game} from "../models/game";
 
 export const newGame = async (req: Request, res: Response) => {
-    const x: number = +(req.query.x || 0)
-    const y: number = +(req.query.y || 0)
-    const mines: number = +(req.query.mines || 0)
+    const x: number = +(req.body.x || 0)
+    const y: number = +(req.body.y || 0)
+    const mines: number = +(req.body.mines || 0)
     const game = new Game(x, y, mines)
     const gameModel: any = saveGame(game);
     game.code = gameModel._id.toString();
@@ -16,9 +16,9 @@ export const newGame = async (req: Request, res: Response) => {
 }
 
 export const toogleFlag = async (req: Request, res: Response) => {
-    const x: number = +(req.query.x || 0)
-    const y: number = +(req.query.y || 0)
-    const code: any = req.query.code
+    const x: number = +(req.body.x || 0)
+    const y: number = +(req.body.y || 0)
+    const code: any = req.body.code
     const game = await updateGame(x, y, code, true);
     res.json({
         msg: 'flag toogle',
@@ -27,9 +27,9 @@ export const toogleFlag = async (req: Request, res: Response) => {
 }
 
 export const clickCell = async (req: Request, res: Response) => {
-    const x: number = +(req.query.x || 0)
-    const y: number = +(req.query.y || 0)
-    const code: any = req.query.code
+    const x: number = +(req.body.x || 0)
+    const y: number = +(req.body.y || 0)
+    const code: any = req.body.code
     const game = await updateGame(x, y, code, false);
     res.json({
         msg: 'cell clicked',
@@ -37,18 +37,8 @@ export const clickCell = async (req: Request, res: Response) => {
     })
 }
 
-export const getGames = (req: Request, res: Response) => {
-    GameModel.find()
-        .then((data: any)=>console.log(data))
-        .catch((err: Error) => console.log('Fallo ' + err))
-    res.json({
-        msg: 'getGames',
-        game: 'game list'
-    })
-}
-
 export const getGame = async (req: Request, res: Response) => {
-    const {id} = req.params;
+    const {id} = req.body;
     try {
         const gameData = await GameModel.findById(id);
         const game = Game.restoreOldGame(gameData);

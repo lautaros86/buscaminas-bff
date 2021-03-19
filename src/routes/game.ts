@@ -1,11 +1,11 @@
 import {Router} from "express";
-import {getGame, newGame, getGames, toogleFlag, clickCell} from "../controllers/game";
+import {getGame, newGame, toogleFlag, clickCell} from "../controllers/game";
 
 const router = Router();
 
-router.get('/new', newGame)
-router.get('/clickCell', clickCell)
-router.get('/toogleFlag', toogleFlag)
-router.get('/:id', getGame)
+router.post('/newGame', newGame)
+router.post('/clickCell', clickCell)
+router.post('/toogleFlag', toogleFlag)
+router.get('/getGame/:id', getGame)
 
 export default router;
